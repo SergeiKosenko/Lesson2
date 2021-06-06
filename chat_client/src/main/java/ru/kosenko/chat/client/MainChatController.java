@@ -11,6 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -21,6 +22,7 @@ import ru.kosenko.network.ChatMessageServiceImpl;
 import ru.kosenko.network.MessageProcessor;
 
 import java.awt.*;
+import java.awt.Dialog;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,7 +42,15 @@ public class MainChatController implements Initializable, MessageProcessor {
     public Button btnSendAuth;
     private ChatMessageService messageService;
     private String currentName;
-
+    public GridPane changePassPane;
+    public GridPane changeNickPane;
+    public PasswordField changeNickPass;
+    public VBox chatPane;
+    public TextField changeNickNewNick;
+    public PasswordField oldPass;
+    public PasswordField newPass;
+    public PasswordField confirmNewPass;
+    public GridPane loginPane;
     public void mockAction(ActionEvent actionEvent) {
         try {
             throw new RuntimeException("Проверка RuntimeException!!!");
@@ -149,8 +159,17 @@ public class MainChatController implements Initializable, MessageProcessor {
                         case AUTH_CONFIRM: {
                             this.currentName = message.getBody();
                             App.stage1.setTitle(currentName);
+                            loginPane.setVisible(false);
+                            chatPane.setVisible(true);
                             break;
                         }
+                        case CHANGE_USERNAME_CONFIRM:
+
+                            changeNickPane.setVisible(false);
+                            chatPane.setVisible(true);
+                            currentName = message.getBody();
+                            App.stage1.setTitle(currentName);
+                            break;
                         case ERROR:
                             showError(message);
                             break;
@@ -181,5 +200,54 @@ public class MainChatController implements Initializable, MessageProcessor {
         msg.setLogin(log);
         msg.setPassword(pass);
         messageService.send(msg.marshall());
+    }
+
+    public void pressChangeNick(ActionEvent event) {
+        chatPane.setVisible(false);
+        changeNickPane.setVisible(true);
+
+    }
+
+    public void pressChangePassword(ActionEvent event) {
+        chatPane.setVisible(false);
+        changePassPane.setVisible(true);
+    }
+
+    public void sendChangeUsername(ActionEvent event) {
+        ChatMessage message = new ChatMessage();
+        message.setMessageType(MessageType.CHANGE_USERNAME);
+        message.setBody(changeNickNewNick.getText());
+        message.setFrom(this.currentName);
+        message.setPassword(changeNickPass.getText());
+
+        messageService.send(message.marshall());
+    }
+
+    public void sendChangePass(ActionEvent event) {
+        String password = oldPass.getText();
+        String newPassword = newPass.getText();
+        String confirmPass = confirmNewPass.getText();
+
+        if (newPassword.equals(confirmPass)) {
+            ChatMessage message = new ChatMessage();
+            message.setMessageType(MessageType.CHANGE_PASSWORD);
+            message.setPassword(password);
+            message.setFrom(this.currentName);
+            messageService.send(message.marshall());
+        } else {
+            oldPass.clear();
+            newPass.clear();
+            confirmNewPass.clear();
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Changing your password is failed");
+            alert.setContentText("Entered passwords are not equal");
+            alert.showAndWait();
+        }
+    }
+
+    public void pressBack(ActionEvent event) {
+        changePassPane.setVisible(false);
+        changeNickPane.setVisible(false);
+        chatPane.setVisible(true);
     }
 }
