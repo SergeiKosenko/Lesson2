@@ -1,5 +1,6 @@
 package ru.kosenko.chat_server;
 
+import ru.kosenko.chat_server.server.ChatServer;
 import ru.kosenko.common.ChatMessage;
 import ru.kosenko.common.MessageType;
 
@@ -55,6 +56,19 @@ public class ClientHandler {
                         break;
                     case PRIVATE:
                         chatServer.sendPrivateMessage(message);
+                        break;
+                    case CHANGE_USERNAME:
+                        System.out.printf("Got change un f: %s n %s", this.currentUsername, message.getBody());
+                        String newName = chatServer.getAuthService().changeUsername(this.currentUsername, message.getBody());
+                        ChatMessage response = new ChatMessage();
+                        if (newName == null && newName.isEmpty()) {
+                            response.setMessageType(MessageType.ERROR);
+                            response.setBody("Something went wrong!");
+                        } else {
+                            response.setMessageType(MessageType.CHANGE_USERNAME_CONFIRM);
+                            response.setBody(newName);
+                        }
+                        sendMessage(response);
                         break;
                 }
 
